@@ -100,7 +100,7 @@ async function pushToClose(data) {
 
   // Build the lead payload
   const leadPayload = {
-    name: `${lastName || 'Unknown'}, ${firstName || ''} - Mortgage Protection`.trim().replace(/,\s*-/, ' -'),
+    name: `${fullName} - Mortgage Protection`,
     status_id: CLOSE_STATUS_NEW_LEAD,
     contacts: [
       {
