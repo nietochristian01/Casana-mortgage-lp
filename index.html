@@ -977,13 +977,6 @@ h2.section-h{
           <div class="field">
             <input type="tel" name="phone" id="phoneInput" placeholder="(555) 123-4567" maxlength="14" required />
           </div>
-          <div class="contact-method">
-            <div class="label">Preferred contact method</div>
-            <button type="button" class="pill contact-pill" data-val="Phone Call">Phone Call</button>
-            <button type="button" class="pill contact-pill" data-val="Text Message">Text Message</button>
-            <button type="button" class="pill contact-pill" data-val="Email">Email</button>
-          </div>
-          <input type="hidden" name="contact_method" id="contactMethodField" />
           <div class="field-lock">Your information is 100% secure and never shared.</div>
           <button type="submit" class="btn-full" id="finalSubmit" disabled>See My Options</button>
           <p class="tcpa-fineprint">By clicking the See My Options button, I expressly consent by electronic signature to receive communications via automatic telephone dialing system or by artificial/pre-recorded message, email or by text message from this website and multiple partner companies or their agents at the telephone number above (even if my number is currently listed on any state, federal, local, or corporate Do Not Call list) including my wireless number if provided. Carrier message and data rates may apply. I understand that my consent is not required as a condition of purchasing any goods or services and that I may revoke my consent at any time. I also acknowledge that I have read and agree to the Privacy Policy and Terms &amp; Conditions.</p>
@@ -1234,18 +1227,10 @@ h2.section-h{
     phoneInput.value = out;
     checkFinal();
   });
-  document.querySelectorAll('.contact-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      document.querySelectorAll('.contact-pill').forEach(p => p.classList.remove('selected'));
-      pill.classList.add('selected');
-      document.getElementById('contactMethodField').value = pill.dataset.val;
-      checkFinal();
-    });
-  });
+
   function checkFinal(){
     const phoneOK = phoneInput.value.replace(/\D/g,'').length === 10;
-    const methodOK = !!document.getElementById('contactMethodField').value;
-    finalSubmit.disabled = !(phoneOK && methodOK);
+    finalSubmit.disabled = !phoneOK;
   }
 
   const params = new URLSearchParams(window.location.search);
