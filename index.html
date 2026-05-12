@@ -1255,24 +1255,41 @@ h2.section-h{
     if(el && params.get(k)) el.value = params.get(k);
   });
 
-  leadForm.addEventListener('submit', async function(e){
+leadForm.addEventListener('submit', async function(e){
     e.preventDefault();
     const formData = new FormData(this);
     const data = Object.fromEntries(formData.entries());
-    const ENDPOINT = '';
-    if(ENDPOINT){
-      try {
-        await fetch(ENDPOINT, {
-          method:'POST',
-          mode:'no-cors',
-          headers:{'Content-Type':'text/plain;charset=utf-8'},
-          body: JSON.stringify(data)
-        });
-        console.log('Lead submitted');
-      } catch(err){ console.error('Submission error:', err); }
-    } else {
-      console.log('Lead captured (no endpoint configured):', data);
+
+    // Submit to Vercel API → Supabase
+    try {
+      const response = await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        console.log('Lead saved:', result);
+      } else {
+        console.error('Lead save failed:', result);
+      }
+    } catch(err) {
+      console.error('Submission error:', err);
     }
+
+    // Fire Meta Pixel Lead event (only if pixel is loaded)
+    if (typeof fbq === 'function') {
+      fbq('track', 'Lead', {
+        content_name: 'Mortgage Protection Quote',
+        content_category: 'mortgage_protection',
+        value: 25.00,
+        currency: 'USD'
+      });
+    }
+
+    // Show thank-you step regardless of save outcome
     goToStep(11);
   });
 
