@@ -605,7 +605,7 @@ h2.section-h{
         <div class="avatar">DK</div>
         <div class="avatar">+</div>
       </div>
-      <div class="text"><strong>127 homeowners</strong> checked their eligibility today</div>
+      <div class="text"><strong><span id="heroCount">127</span> homeowners</strong> checked their eligibility today</div>
     </div>
   </div>
 </section>
@@ -813,8 +813,8 @@ h2.section-h{
         <div class="step-count" id="stepCount">Step 1 of 9</div>
       </div>
 
-      <div class="social-proof">127 people checked their eligibility today</div>
-
+      <div class="social-proof"><span id="modalCount">127</span> people checked their eligibility today</div>
+      
       <div class="trust-row-orange" id="trustRowOrange">
         <span class="tb">Covers Mortgage Payments</span>
         <span class="tb">No Medical Exam</span>
@@ -1294,6 +1294,43 @@ leadForm.addEventListener('submit', async function(e){
   });
 
   updateProgress();
+})();
+<script>
+(function(){
+  // Activity counter — grows from 127 to ~250 over the course of the day
+  const START = 127;
+  const TARGET = 250;
+  const range = TARGET - START;
+
+  function getCount(){
+    const now = new Date();
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const msIntoDay = now - dayStart;
+    const msInDay = 86400000; // 24 * 60 * 60 * 1000
+    const progress = msIntoDay / msInDay; // 0.0 at midnight, 1.0 at next midnight
+
+    // Base value grows linearly through the day
+    const base = START + Math.floor(progress * range);
+
+    // Add a small deterministic wobble (+/- 2) seeded by the current 5-min window,
+    // so the number occasionally bumps up between visits but stays stable for a few minutes
+    const fiveMinBucket = Math.floor(msIntoDay / (5 * 60 * 1000));
+    const wobble = ((fiveMinBucket * 9301 + 49297) % 5) - 2; // -2..+2
+
+    return Math.max(START, base + wobble);
+  }
+
+  function update(){
+    const value = getCount();
+    const hero = document.getElementById('heroCount');
+    const modal = document.getElementById('modalCount');
+    if(hero) hero.textContent = value;
+    if(modal) modal.textContent = value;
+  }
+
+  update();
+  // Re-check every 30 seconds so a visitor sitting on the page sees the number tick up
+  setInterval(update, 30 * 1000);
 })();
 </script>
 
