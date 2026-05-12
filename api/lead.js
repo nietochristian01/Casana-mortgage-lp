@@ -45,6 +45,33 @@ function formatDob(dob) {
   return `${m[3]}-${m[1]}-${m[2]}`;
 }
 
+// Convert full state name to 2-letter abbreviation (Close expects abbreviations)
+// The zippopotam.us API returns full names like "Florida", but Close stores "FL"
+const STATE_ABBR = {
+  'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+  'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
+  'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA',
+  'Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD',
+  'Massachusetts':'MA','Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO',
+  'Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ',
+  'New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH',
+  'Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC',
+  'South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT',
+  'Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
+  'District of Columbia':'DC','Puerto Rico':'PR'
+};
+function toStateAbbr(state) {
+  if (!state) return null;
+  // If already a 2-letter code, return as-is uppercased
+  if (state.length === 2) return state.toUpperCase();
+  // Look up by exact match, then case-insensitive fallback
+  if (STATE_ABBR[state]) return STATE_ABBR[state];
+  const normalized = Object.keys(STATE_ABBR).find(
+    k => k.toLowerCase() === state.toLowerCase()
+  );
+  return normalized ? STATE_ABBR[normalized] : null;
+}
+
 // Build a readable notes string with anything that doesn't fit cleanly into a custom field
 function buildNotes(data) {
   const lines = [];
@@ -69,6 +96,7 @@ async function pushToClose(data) {
   const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Unknown';
   const phoneE164 = formatPhoneE164(data.phone);
   const dobFormatted = formatDob(data.dob);
+  const stateAbbr = toStateAbbr(data.state);
 
   // Build the lead payload
   const leadPayload = {
@@ -85,14 +113,14 @@ async function pushToClose(data) {
       {
         label: 'home',
         city: data.city || '',
-        state: data.state || '',
+        state: stateAbbr || '',
         zipcode: data.zipcode || '',
         country: 'US'
       }
     ] : [],
     // Custom fields
     [`custom.${CF.LEAD_SOURCE}`]: 'Mortgage Protection LP',
-    [`custom.${CF.CLIENT_TYPE}`]: 'Life',
+    [`custom.${CF.CLIENT_TYPE}`]: 'Life Insurance',
     [`custom.${CF.SUBMITTED_AT}`]: new Date().toISOString(),
     ...(dobFormatted && { [`custom.${CF.DOB}`]: dobFormatted }),
     ...(data.mortgage_balance && { [`custom.${CF.MORTGAGE_BALANCE}`]: data.mortgage_balance }),
@@ -100,7 +128,7 @@ async function pushToClose(data) {
     ...(data.beneficiary && { [`custom.${CF.BENEFICIARY_RELATIONSHIP}`]: data.beneficiary }),
     ...(data.beneficiary_name && { [`custom.${CF.BENEFICIARY_NAME}`]: data.beneficiary_name }),
     ...(data.health_history && { [`custom.${CF.HEALTH_HISTORY}`]: data.health_history }),
-    ...(data.state && { [`custom.${CF.RESIDENT_STATE}`]: data.state }),
+    ...(stateAbbr && { [`custom.${CF.RESIDENT_STATE}`]: stateAbbr }),
     ...(data.utm_campaign && { [`custom.${CF.UTM_CAMPAIGN}`]: data.utm_campaign }),
     ...(data.utm_content && { [`custom.${CF.UTM_CONTENT}`]: data.utm_content })
   };
